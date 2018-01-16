@@ -10,33 +10,31 @@ import (
 )
 
 func main() {
-	root := "."
-
+	var dirs []string
 	if len(os.Args) > 1 {
-		root = os.Args[1]
+		dirs = os.Args[1:]
+	} else {
+		dirs = append(dirs, ".")
 	}
 
-	// var paths []string
-	err := fastwalk.Walk(root, func(path string, typ os.FileMode) error {
-		if typ.IsDir() {
+	for _, root := range dirs {
+		err := fastwalk.Walk(root, func(path string, typ os.FileMode) error {
+			if typ.IsDir() {
+				return nil
+			}
+
+			relative, _ := filepath.Rel(root, path)
+			if strings.Index(relative, ".") == 0 {
+				return nil
+			}
+
+			fmt.Println(relative)
+			// paths = append(paths, relative)
 			return nil
+		})
+
+		if err != nil {
+			fmt.Println("fastwalk.Walk", err, root)
 		}
-
-		relative, _ := filepath.Rel(root, path)
-		if strings.Index(relative, ".") == 0 {
-			return nil
-		}
-
-		fmt.Println(relative)
-		// paths = append(paths, relative)
-		return nil
-	})
-
-	if err != nil {
-		fmt.Println("fastwalk.Walk", err, root)
 	}
-
-	// for _, p := range paths {
-	// 	fmt.Println(p)
-	// }
 }
