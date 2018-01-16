@@ -12,6 +12,10 @@ import (
 func main() {
 	root := "."
 
+	if len(os.Args) > 1 {
+		root = os.Args[1]
+	}
+
 	// var paths []string
 	err := fastwalk.Walk(root, func(path string, typ os.FileMode) error {
 		if typ.IsDir() {
@@ -29,7 +33,7 @@ func main() {
 	})
 
 	if err != nil {
-		fmt.Println("fastwalk.Walk", err)
+		fmt.Println("fastwalk.Walk", err, root)
 	}
 
 	// for _, p := range paths {
