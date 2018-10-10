@@ -3,48 +3,52 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 )
 
 func compare(paths []string) {
-	m, err := os.Open(paths[0])
-	if err != nil {
-		return
+	var readers []*bufio.Reader
+	for _, p := range paths {
+		f, err := os.Open(p)
+		if err != nil {
+			return
+		}
+		defer f.Close()
+
+		readers = append(readers, bufio.NewReader(f))
 	}
 
+	eof := false
 	offset := 0
-	mr := bufio.NewReader(m)
+	for done := false; !done; {
+		unique := make(map[byte]struct{}, 0)
 
-	var o []*bufio.Reader
-	for _, n := range paths[1:] {
-		f, err := os.Open(n)
-		if err != nil {
-			return
+		for _, reader := range readers {
+			c, err := reader.ReadByte()
+			if err == io.EOF {
+				eof = true
+			} else if err != nil {
+				fmt.Println("err:", err)
+				continue
+			}
+			unique[c] = struct{}{}
 		}
 
-		o = append(o, bufio.NewReader(f))
-	}
+		if eof || (len(unique) != 1) {
+			done = true
+			continue
+		}
 
-	c, err := mr.ReadByte()
-	if err != nil {
-		return
-	}
-
-	for _, t := range o {
 		offset = offset + 1
-		cp, err := t.ReadByte()
-		if err != nil {
-			return
-		}
-
-		if cp != c {
-			fmt.Println("differs at:", offset)
-
-		}
 	}
-	fmt.Println("finished compare at offset:", offset)
+	if eof {
+		fmt.Println("end of file reached at:", offset)
 
+	} else {
+		fmt.Println("differs at:", offset)
+	}
 }
 
 func main() {
